@@ -8,13 +8,13 @@ export type BackgroundTaskOptions = {
         type: string;
         package?: string;
     };
-    color?: string | undefined;
-    linkingURI?: string | undefined;
+    color?: string;
+    linkingURI?: string;
     progressBar?: {
         max: number;
         value: number;
-        indeterminate?: boolean | undefined;
-    } | undefined;
+        indeterminate?: boolean;
+    };
 };
 declare const backgroundServer: BackgroundServer;
 /**
@@ -28,7 +28,7 @@ declare const backgroundServer: BackgroundServer;
  *            }} BackgroundTaskOptions
  * @extends EventEmitter<'expiration',any>
  */
-declare class BackgroundServer extends EventEmitter<"expiration", any> {
+declare class BackgroundServer {
     /** @private */
     private _runnedTasks;
     /** @private @type {(arg0?: any) => void} */
@@ -86,25 +86,12 @@ declare class BackgroundServer extends EventEmitter<"expiration", any> {
      * @param {BackgroundTaskOptions & {parameters?: T}} options
      * @returns {Promise<void>}
      */
-    start<T>(task: (taskData?: T | undefined) => Promise<void>, options: {
-        taskName: string;
-        taskTitle: string;
-        taskDesc: string;
-        taskIcon: {
-            name: string;
-            type: string;
-            package?: string;
-        };
-        color?: string | undefined;
-        linkingURI?: string | undefined;
-        progressBar?: {
-            max: number;
-            value: number;
-            indeterminate?: boolean | undefined;
-        } | undefined;
-    } & {
-        parameters?: T | undefined;
-    }): Promise<void>;
+    start<T>(
+        task: (taskData?: T) => Promise<void>,
+        options: BackgroundTaskOptions & {
+            parameters?: T;
+        }
+    ): Promise<void>;
     /**
      * @private
      * @template T
@@ -123,5 +110,5 @@ declare class BackgroundServer extends EventEmitter<"expiration", any> {
      * @returns {Promise<void>}
      */
     stop(): Promise<void>;
+    sendStopBroadcast(): Promise<void>;
 }
-import EventEmitter from "eventemitter3";

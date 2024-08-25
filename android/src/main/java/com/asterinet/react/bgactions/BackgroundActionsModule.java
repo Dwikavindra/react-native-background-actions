@@ -18,9 +18,9 @@ import com.facebook.react.bridge.ReadableMap;
 public class BackgroundActionsModule extends ReactContextBaseJavaModule {
 
     private static final String TAG = "RNBackgroundActions";
+    private static final String ACTION_STOP_SERVICE = "com.asterinet.react.bgactions.ACTION_STOP_SERVICE";
 
     private final ReactContext reactContext;
-
     private Intent currentServiceIntent;
 
     public BackgroundActionsModule(ReactApplicationContext reactContext) {
@@ -75,6 +75,18 @@ public class BackgroundActionsModule extends ReactContextBaseJavaModule {
             return;
         }
         promise.resolve(null);
+    }
+
+    @SuppressWarnings("unused")
+    @ReactMethod
+    public void sendStopBroadcast(@NonNull final Promise promise) {
+        try {
+            Intent stopIntent = new Intent(ACTION_STOP_SERVICE);
+            reactContext.sendBroadcast(stopIntent);
+            promise.resolve(null);
+        } catch (Exception e) {
+            promise.reject(e);
+        }
     }
 
     @SuppressWarnings("unused")

@@ -1,3 +1,4 @@
+
 package com.asterinet.react.bgactions;
 
 import android.annotation.SuppressLint;
@@ -5,8 +6,10 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +26,17 @@ final public class RNBackgroundActionsTask extends HeadlessJsTaskService {
 
     public static final int SERVICE_NOTIFICATION_ID = 92901;
     private static final String CHANNEL_ID = "RN_BACKGROUND_ACTIONS_CHANNEL";
+    private static final String ACTION_STOP_SERVICE = "com.asterinet.react.bgactions.ACTION_STOP_SERVICE";
+
+    private BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            System.out.println("This is intent action"+intent.getAction());
+            if (ACTION_STOP_SERVICE.equals(intent.getAction())) {
+                stopForegroundService();  // Stop the foreground service when the broadcast is received
+            }
+        }
+    };
 
     @SuppressLint("UnspecifiedImmutableFlag")
     @NonNull
@@ -37,12 +51,12 @@ final public class RNBackgroundActionsTask extends HeadlessJsTaskService {
         if (linkingURI != null) {
             notificationIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(linkingURI));
         } else {
-            //as RN works on single activity architecture - we don't need to find current activity on behalf of react context
+            // As RN works on single activity architecture - we don't need to find current activity on behalf of react context
             notificationIntent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
         }
         final PendingIntent contentIntent;
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            contentIntent = PendingIntent.getActivity(context,0, notificationIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            contentIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             contentIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_MUTABLE);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -79,6 +93,7 @@ final public class RNBackgroundActionsTask extends HeadlessJsTaskService {
         return null;
     }
 
+    @SuppressLint({"ForegroundServiceType", "UnspecifiedRegisterReceiverFlag"})
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         final Bundle extras = intent.getExtras();
@@ -86,12 +101,33 @@ final public class RNBackgroundActionsTask extends HeadlessJsTaskService {
             throw new IllegalArgumentException("Extras cannot be null");
         }
         final BackgroundTaskOptions bgOptions = new BackgroundTaskOptions(extras);
-        createNotificationChannel(bgOptions.getTaskTitle(), bgOptions.getTaskDesc()); // Necessary creating channel for API 26+
+        createNotificationChannel(bgOptions.getTaskTitle(), bgOptions.getTaskDesc()); // Necessary for creating channel for API 26+
         // Create the notification
         final Notification notification = buildNotification(this, bgOptions);
 
         startForeground(SERVICE_NOTIFICATION_ID, notification);
-        return super.onStartCommand(intent, flags, startId);
+
+        // Register the broadcast receiver to listen for the stop action
+        IntentFilter filter = new IntentFilter(ACTION_STOP_SERVICE);
+        registerReceiver(stopServiceReceiver, filter);
+
+        return START_STICKY;  // Keep the service running until explicitly stopped
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopForeground(true);
+        stopSelf();
+        System.out.println("Passed statement stopForeground and stopSelf" );
+        unregisterReceiver(stopServiceReceiver);  // Unregister the broadcast receiver
+    }
+
+    private void stopForegroundService() {
+        System.out.println("On Stop Foreground Service before stopForeground");
+        stopForeground(true);  // Stop the foreground service and remove the notification
+        stopSelf();  // Stop the service itself
+        System.out.println("Passed stopSelf");
     }
 
     private void createNotificationChannel(@NonNull final String taskTitle, @NonNull final String taskDesc) {

@@ -131,6 +131,11 @@ class BackgroundServer extends EventEmitter {
         await RNBackgroundActions.stop();
         this._isRunning = false;
     }
+    async sendStopBroadcast() {
+        this._stopTask();
+        await RNBackgroundActions.sendStopBroadcast();
+        this._isRunning = false;
+    }
 }
 
 const backgroundServer = new BackgroundServer();

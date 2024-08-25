@@ -1,4 +1,16 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.0.0'
+    }
+}
+
 apply plugin: 'com.android.library'
+
 
 def safeExtGet(prop, fallback) {
     rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
@@ -8,7 +20,7 @@ android {
     compileSdkVersion safeExtGet('compileSdkVersion', 34)
 
     defaultConfig {
-        minSdkVersion safeExtGet('minSdkVersion', 16)
+        minSdkVersion safeExtGet('minSdkVersion', 23)
         targetSdkVersion safeExtGet('targetSdkVersion', 34)
     }
 
@@ -17,8 +29,16 @@ android {
         namespace = "com.asterinet.react.bgactions"
     }
 }
-
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        // Optional, add if needed
+        maven { url 'https://jitpack.io' }
+    }
+}
 dependencies {
     //noinspection GradleDynamicVersion
-    implementation 'com.facebook.react:react-native:+'  // From node_modules
+    implementation 'androidx.annotation:annotation:1.8.2'
+    implementation 'com.facebook.react:react-android:+'  // From node_modules
 }
