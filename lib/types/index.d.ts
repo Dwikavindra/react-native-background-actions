@@ -8,13 +8,13 @@ export type BackgroundTaskOptions = {
         type: string;
         package?: string;
     };
-    color?: string;
-    linkingURI?: string;
+    color?: string | undefined;
+    linkingURI?: string | undefined;
     progressBar?: {
         max: number;
         value: number;
-        indeterminate?: boolean;
-    };
+        indeterminate?: boolean | undefined;
+    } | undefined;
 };
 declare const backgroundServer: BackgroundServer;
 /**
@@ -28,7 +28,7 @@ declare const backgroundServer: BackgroundServer;
  *            }} BackgroundTaskOptions
  * @extends EventEmitter<'expiration',any>
  */
-declare class BackgroundServer {
+declare class BackgroundServer extends EventEmitter<"expiration", any> {
     /** @private */
     private _runnedTasks;
     /** @private @type {(arg0?: any) => void} */
@@ -86,12 +86,25 @@ declare class BackgroundServer {
      * @param {BackgroundTaskOptions & {parameters?: T}} options
      * @returns {Promise<void>}
      */
-    start<T>(
-        task: (taskData?: T) => Promise<void>,
-        options: BackgroundTaskOptions & {
-            parameters?: T;
-        }
-    ): Promise<void>;
+    start<T>(task: (taskData?: T | undefined) => Promise<void>, options: {
+        taskName: string;
+        taskTitle: string;
+        taskDesc: string;
+        taskIcon: {
+            name: string;
+            type: string;
+            package?: string;
+        };
+        color?: string | undefined;
+        linkingURI?: string | undefined;
+        progressBar?: {
+            max: number;
+            value: number;
+            indeterminate?: boolean | undefined;
+        } | undefined;
+    } & {
+        parameters?: T | undefined;
+    }): Promise<void>;
     /**
      * @private
      * @template T
@@ -112,3 +125,4 @@ declare class BackgroundServer {
     stop(): Promise<void>;
     sendStopBroadcast(): Promise<void>;
 }
+import EventEmitter from "eventemitter3";
