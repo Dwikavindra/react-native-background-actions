@@ -115,7 +115,11 @@ final public class RNBackgroundActionsTask extends HeadlessJsTaskService {
 
         // Register the broadcast receiver to listen for the stop action
         IntentFilter filter = new IntentFilter(ACTION_STOP_SERVICE);
-        registerReceiver(stopServiceReceiver, filter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            registerReceiver(stopServiceReceiver, filter,RECEIVER_NOT_EXPORTED);
+        }else{
+            registerReceiver(stopServiceReceiver,filter);
+        }
         super.onStartCommand(intent,flags,startId);
         return START_STICKY;// Keep the service running until explicitly stopped
     }
